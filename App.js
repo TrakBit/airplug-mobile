@@ -3,7 +3,7 @@ import {Text, View, ScrollView} from 'react-native';
 import {TextInput, Button, Snackbar, List} from 'react-native-paper';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import {login, getTables, getRows} from './Api/Api';
+import {login, getTables, getAllRows} from './Api/Api';
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 
@@ -145,8 +145,13 @@ function Row({route}) {
     useEffect(() => {
         async function setConfig() {
             const token = await SecureStore.getItemAsync('token');
-            const tableData = await getRows(token, route.params.value.table_id);
-            setRows(tableData.data.rows);
+            const tableData = await getAllRows(token, route.params.value.table_id);
+            const filteredRows = tableData.data.rows.filter((value) => {
+                if (value.table_id === route.params.value.table_id) {
+                    return value;
+                }
+            });
+            setRows(filteredRows);
         }
         setConfig();
     }, []);
@@ -161,7 +166,7 @@ function Row({route}) {
                                 return (
                                     <List.Item
                                         key={i}
-                                        title={value[Object.keys(value)[0]]}
+                                        title={value.record[Object.keys(value.record)[0]]}
                                         style={{backgroundColor: '#e4f9ff', marginTop: 10}}
                                     />
                                 );

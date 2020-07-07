@@ -1,5 +1,4 @@
 import fetch from './Config';
-import * as SecureStore from 'expo-secure-store';
 
 export const login = (email, password) => {
     const body = {email, password};
@@ -20,4 +19,12 @@ export const getRows = (token, table_id) => {
     };
     const body = {token, table_id};
     return fetch.post('/rows/', body, {headers});
+};
+
+export const getAllRows = (token, table_id) => {
+    const headers = {
+        Authorization: 'Token ' + localStorage.getItem('token')
+    };
+    const body = {token, table_id};
+    return fetch.post('/allrows/', body, {headers});
 };
