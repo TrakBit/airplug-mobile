@@ -13,3 +13,11 @@ export const getTables = (token) => {
     const body = {token};
     return fetch.post('/tables/', body, {headers});
 };
+
+export const getRows = (token, table_id) => {
+    const headers = {
+        Authorization: 'Token ' + token
+    };
+    const body = {token, table_id};
+    return fetch.post('/rows/', body, {headers});
+};

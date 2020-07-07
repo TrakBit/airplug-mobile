@@ -1,10 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import {Text, View} from 'react-native';
-import {TextInput, Button, Snackbar} from 'react-native-paper';
+import {Text, View, ScrollView} from 'react-native';
+import {TextInput, Button, Snackbar, List} from 'react-native-paper';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import {login, getTables} from './Api/Api';
+import {login, getTables, getRows} from './Api/Api';
 import * as SecureStore from 'expo-secure-store';
+import * as SQLite from 'expo-sqlite';
 
 function Login({navigation}) {
     const [email, setEmail] = useState('');
@@ -22,11 +23,12 @@ function Login({navigation}) {
     const loginHandle = async () => {
         if (validateEmail(email) === true) {
             const regData = await login(email, password);
-            await SecureStore.setItemAsync('token', regData.data.token);
             if (regData.data.loggedin === 1) {
+                await SecureStore.setItemAsync('token', regData.data.token);
                 navigation.navigate('Home');
             } else {
-                await setNotificationMsg('  Wrong Credentials');
+                setNotificationMsg('  Wrong Credentials');
+                setVisible(true);
             }
         } else {
             await setNotificationMsg('Invalid Email');
@@ -80,30 +82,92 @@ function Login({navigation}) {
     );
 }
 
-function Home() {
+function Home({navigation}) {
+    const db = SQLite.openDatabase('db.db');
     const [tables, setTables] = useState([]);
+
+    const selectRow = (value) => {
+        navigation.navigate('Row', {value});
+    };
 
     useEffect(() => {
         async function setConfig() {
             const token = await SecureStore.getItemAsync('token');
             const tableData = await getTables(token);
-            setTables(tableData.data.tables);
+
+            db.transaction((tx) => {
+                tx.executeSql('drop table tables;');
+                tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);
+            });
+
+            tableData.data.tables.forEach((value) => {
+                db.transaction((tx) => {
+                    tx.executeSql('insert into tables (base_key, api_key, table_id, table_name) values (?,?,?,?)',
+                        [value.base_key, value.api_key, value.table_id, value.table_name]);
+                });
+            });
+
+            db.transaction((tx) => {
+                tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
+                    setTables(_array);
+                });
+            });
         }
         setConfig();
     }, []);
 
     return (
         <View style={styles.container}>
-            <Text style={styles.headerStyle}>Home</Text>
+            <Text style={styles.headerStyle}>Tables</Text>
             <View style={[{flex: 1}, styles.elementsContainer]}>
-                <View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
+                <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
                     {
                         tables.map((value, i) => {
                             return (
-                                <Text key={i}>{value.table_name}</Text>
+                                <List.Item
+                                    key={i}
+                                    title={value.table_name}
+                                    style={{backgroundColor: '#e4f9ff'}}
+                                    onPress={() => selectRow(value)}
+                                />
                             );
                         })
                     }
+                </View>
+            </View>
+        </View>
+    );
+}
+
+function Row({route}) {
+    const [rows, setRows] = useState([]);
+
+    useEffect(() => {
+        async function setConfig() {
+            const token = await SecureStore.getItemAsync('token');
+            const tableData = await getRows(token, route.params.value.table_id);
+            setRows(tableData.data.rows);
+        }
+        setConfig();
+    }, []);
+
+    return (
+        <View style={styles.container}>
+            <View style={[{flex: 1}, styles.elementsContainer]}>
+                <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+                    <ScrollView>
+                        {
+                            rows.map((value, i) => {
+                                return (
+                                    <List.Item
+                                        key={i}
+                                        title={value[Object.keys(value)[0]]}
+                                        style={{backgroundColor: '#e4f9ff', marginTop: 10}}
+                                    />
+                                );
+                            })
+                        }
+                    </ScrollView>
                 </View>
             </View>
         </View>
@@ -135,7 +199,7 @@ const Stack = createStackNavigator();
 export default function App() {
     return (
         <NavigationContainer>
-            <Stack.Navigator initialRouteName='Login'>
+            <Stack.Navigator initialRouteName='Home'>
                 <Stack.Screen
                     name='Login'
                     component={Login}
@@ -143,6 +207,10 @@ export default function App() {
                 <Stack.Screen
                     name='Home'
                     component={Home}
+                />
+                <Stack.Screen
+                    name='Row'
+                    component={Row}
                 />
             </Stack.Navigator>
         </NavigationContainer>
