@@ -21,10 +21,10 @@ export const getRows = (token, table_id) => {
     return fetch.post('/rows/', body, {headers});
 };
 
-export const getAllRows = (token, table_id) => {
+export const getAllRows = (token) => {
     const headers = {
-        Authorization: 'Token ' + localStorage.getItem('token')
+        Authorization: 'Token ' + token
     };
-    const body = {token, table_id};
+    const body = {token};
     return fetch.post('/allrows/', body, {headers});
 };

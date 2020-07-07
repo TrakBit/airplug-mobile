@@ -94,16 +94,29 @@ function Home({navigation}) {
         async function setConfig() {
             const token = await SecureStore.getItemAsync('token');
             const tableData = await getTables(token);
+            const rowData = await getAllRows(token);
 
             db.transaction((tx) => {
                 tx.executeSql('drop table tables;');
                 tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);
             });
 
+            db.transaction((tx) => {
+                tx.executeSql('drop table records;');
+                tx.executeSql('create table if not exists records (table_id int, record text);', []);
+            });
+
             tableData.data.tables.forEach((value) => {
                 db.transaction((tx) => {
                     tx.executeSql('insert into tables (base_key, api_key, table_id, table_name) values (?,?,?,?)',
                         [value.base_key, value.api_key, value.table_id, value.table_name]);
+                });
+            });
+
+            rowData.data.rows.forEach((value) => {
+                db.transaction((tx) => {
+                    tx.executeSql('insert into records (table_id, record) values (?,?)',
+                        [value.table_id, JSON.stringify(value.record)]);
                 });
             });
 
@@ -140,20 +153,15 @@ function Home({navigation}) {
 }
 
 function Row({route}) {
+    const db = SQLite.openDatabase('db.db');
     const [rows, setRows] = useState([]);
 
     useEffect(() => {
-        async function setConfig() {
-            const token = await SecureStore.getItemAsync('token');
-            const tableData = await getAllRows(token, route.params.value.table_id);
-            const filteredRows = tableData.data.rows.filter((value) => {
-                if (value.table_id === route.params.value.table_id) {
-                    return value;
-                }
+        db.transaction((tx) => {
+            tx.executeSql('select * from rows', [], (_, {rows: {_array}}) => {
+                setRows(_array);
             });
-            setRows(filteredRows);
-        }
-        setConfig();
+        });
     }, []);
 
     return (
@@ -166,7 +174,7 @@ function Row({route}) {
                                 return (
                                     <List.Item
                                         key={i}
-                                        title={value.record[Object.keys(value.record)[0]]}
+                                        title={value}
                                         style={{backgroundColor: '#e4f9ff', marginTop: 10}}
                                     />
                                 );
