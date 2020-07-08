@@ -7,7 +7,7 @@ import {login, getTables, getAllRows} from './Api/Api';
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
-import NetInfo from "@react-native-community/netinfo";
+import NetInfo from '@react-native-community/netinfo';
 
 function Login({navigation}) {
     const [email, setEmail] = useState('');
@@ -92,10 +92,19 @@ function Home({navigation}) {
         navigation.navigate('Row', {table_id});
     };
 
+    const logout = () => {
+        navigation.navigate('Login');
+    };
+
     useEffect(() => {
         async function setConfig() {
             const token = await SecureStore.getItemAsync('token');
-            const tableData = await getTables(token);
+            let tableData = {};
+            try {
+                tableData = await getTables(token);
+            } catch (error) {
+                logout();
+            }
             const rowData = await getAllRows(token);
 
             await db.transaction((tx) => {
