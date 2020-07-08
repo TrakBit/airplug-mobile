@@ -86,8 +86,8 @@ function Home({navigation}) {
     const db = SQLite.openDatabase('db.db');
     const [tables, setTables] = useState([]);
 
-    const selectRow = (value) => {
-        navigation.navigate('Row', {value});
+    const selectRow = (table_id) => {
+        navigation.navigate('Row', {table_id});
     };
 
     useEffect(() => {
@@ -113,16 +113,16 @@ function Home({navigation}) {
                 });
             });
 
+            db.transaction((tx) => {
+                tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
+                    setTables(_array);
+                });
+            });
+
             rowData.data.rows.forEach((value) => {
                 db.transaction((tx) => {
                     tx.executeSql('insert into records (table_id, record) values (?,?)',
                         [value.table_id, JSON.stringify(value.record)]);
-                });
-            });
-
-            db.transaction((tx) => {
-                tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
-                    setTables(_array);
                 });
             });
         }
@@ -141,7 +141,7 @@ function Home({navigation}) {
                                     key={i}
                                     title={value.table_name}
                                     style={{backgroundColor: '#e4f9ff'}}
-                                    onPress={() => selectRow(value)}
+                                    onPress={() => selectRow(value.table_id)}
                                 />
                             );
                         })
@@ -155,12 +155,15 @@ function Home({navigation}) {
 function Row({route}) {
     const db = SQLite.openDatabase('db.db');
     const [rows, setRows] = useState([]);
+    const {table_id} = route.params;
 
     useEffect(() => {
         db.transaction((tx) => {
-            tx.executeSql('select * from rows', [], (_, {rows: {_array}}) => {
-                setRows(_array);
-            });
+            tx.executeSql('select * from records where table_id = (?)',
+                [table_id], (_, {rows: {_array}}) => {
+                    setRows(_array);
+                }
+            );
         });
     }, []);
 
@@ -174,7 +177,7 @@ function Row({route}) {
                                 return (
                                     <List.Item
                                         key={i}
-                                        title={value}
+                                        title={JSON.parse(value.record)[Object.keys(JSON.parse(value.record))[0]]}
                                         style={{backgroundColor: '#e4f9ff', marginTop: 10}}
                                     />
                                 );
