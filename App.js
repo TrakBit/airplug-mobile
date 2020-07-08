@@ -7,6 +7,7 @@ import {login, getTables, getAllRows} from './Api/Api';
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
+import NetInfo from "@react-native-community/netinfo";
 
 function Login({navigation}) {
     const [email, setEmail] = useState('');
@@ -109,14 +110,19 @@ function Home({navigation}) {
 
             const databaseLayerRecords = new DatabaseLayer(async () => db, 'records');
             await databaseLayerRecords.bulkInsertOrReplace(rowData.data.rows);
-
-            db.transaction((tx) => {
-                tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
-                    setTables(_array);
-                });
-            });
         }
-        setConfig();
+
+        db.transaction((tx) => {
+            tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
+                setTables(_array);
+            });
+        });
+
+        NetInfo.fetch().then((state) => {
+            if (state.isConnected) {
+                setConfig();
+            }
+        });
     }, []);
 
     return (
