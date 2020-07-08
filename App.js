@@ -119,17 +119,23 @@ function Home({navigation}) {
 
             const databaseLayerRecords = new DatabaseLayer(async () => db, 'records');
             await databaseLayerRecords.bulkInsertOrReplace(rowData.data.rows);
-        }
 
-        db.transaction((tx) => {
-            tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
-                setTables(_array);
+            await db.transaction((tx) => {
+                tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
+                    setTables(_array);
+                });
             });
-        });
+        }
 
         NetInfo.fetch().then((state) => {
             if (state.isConnected) {
                 setConfig();
+            } else {
+                db.transaction((tx) => {
+                    tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
+                        setTables(_array);
+                    });
+                });
             }
         });
     }, []);
@@ -145,7 +151,7 @@ function Home({navigation}) {
                                 <List.Item
                                     key={i}
                                     title={value.table_name}
-                                    style={{backgroundColor: '#e4f9ff'}}
+                                    style={{backgroundColor: '#e4f9ff', marginTop: 10}}
                                     onPress={() => selectRow(value.table_id)}
                                 />
                             );
