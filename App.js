@@ -6,6 +6,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {login, getTables, getAllRows} from './Api/Api';
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
+import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 
 function Login({navigation}) {
     const [email, setEmail] = useState('');
@@ -96,33 +97,22 @@ function Home({navigation}) {
             const tableData = await getTables(token);
             const rowData = await getAllRows(token);
 
-            db.transaction((tx) => {
-                tx.executeSql('drop table tables;');
+            await db.transaction((tx) => {
                 tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);
-            });
-
-            db.transaction((tx) => {
-                tx.executeSql('drop table records;');
                 tx.executeSql('create table if not exists records (table_id int, record text);', []);
+                tx.executeSql('delete from tables');
+                tx.executeSql('delete from records');
             });
 
-            tableData.data.tables.forEach((value) => {
-                db.transaction((tx) => {
-                    tx.executeSql('insert into tables (base_key, api_key, table_id, table_name) values (?,?,?,?)',
-                        [value.base_key, value.api_key, value.table_id, value.table_name]);
-                });
-            });
+            const databaseLayerTables = new DatabaseLayer(async () => db, 'tables');
+            await databaseLayerTables.bulkInsertOrReplace(tableData.data.tables);
+
+            const databaseLayerRecords = new DatabaseLayer(async () => db, 'records');
+            await databaseLayerRecords.bulkInsertOrReplace(rowData.data.rows);
 
             db.transaction((tx) => {
                 tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
                     setTables(_array);
-                });
-            });
-
-            rowData.data.rows.forEach((value) => {
-                db.transaction((tx) => {
-                    tx.executeSql('insert into records (table_id, record) values (?,?)',
-                        [value.table_id, JSON.stringify(value.record)]);
                 });
             });
         }
@@ -155,15 +145,14 @@ function Home({navigation}) {
 function Row({route}) {
     const db = SQLite.openDatabase('db.db');
     const [rows, setRows] = useState([]);
+
     const {table_id} = route.params;
 
     useEffect(() => {
         db.transaction((tx) => {
-            tx.executeSql('select * from records where table_id = (?)',
-                [table_id], (_, {rows: {_array}}) => {
-                    setRows(_array);
-                }
-            );
+            tx.executeSql('select * from records where table_id = (?)', [table_id], (_, {rows: {_array}}) => {
+                setRows(_array);
+            });
         });
     }, []);
 
