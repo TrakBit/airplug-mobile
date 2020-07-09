@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {Text, View, ScrollView} from 'react-native';
-import {TextInput, Button, Snackbar, List} from 'react-native-paper';
+import {TextInput, Button, Snackbar, List, Title, Subheading} from 'react-native-paper';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {login, getTables, getAllRows} from './Api/Api';
@@ -8,6 +8,20 @@ import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 import NetInfo from '@react-native-community/netinfo';
+import {AppLoading} from 'expo';
+import {
+    useFonts,
+    Rubik_300Light,
+    Rubik_300Light_Italic,
+    Rubik_400Regular,
+    Rubik_400Regular_Italic,
+    Rubik_500Medium,
+    Rubik_500Medium_Italic,
+    Rubik_700Bold,
+    Rubik_700Bold_Italic,
+    Rubik_900Black,
+    Rubik_900Black_Italic
+} from '@expo-google-fonts/rubik';
 
 function Login({navigation}) {
     const [email, setEmail] = useState('');
@@ -85,10 +99,23 @@ function Login({navigation}) {
 }
 
 function Home({navigation}) {
+    const [fontsLoaded] = useFonts({
+        Rubik_300Light,
+        Rubik_300Light_Italic,
+        Rubik_400Regular,
+        Rubik_400Regular_Italic,
+        Rubik_500Medium,
+        Rubik_500Medium_Italic,
+        Rubik_700Bold,
+        Rubik_700Bold_Italic,
+        Rubik_900Black,
+        Rubik_900Black_Italic
+    });
+
     const db = SQLite.openDatabase('db.db');
     const [tables, setTables] = useState([]);
 
-    const selectRow = (table_id) => {
+    const selectTable = (table_id) => {
         navigation.navigate('Row', {table_id});
     };
 
@@ -140,34 +167,42 @@ function Home({navigation}) {
         });
     }, []);
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.headerStyle}>Tables</Text>
-            <View style={[{flex: 1}, styles.elementsContainer]}>
-                <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
-                    {
-                        tables.map((value, i) => {
-                            return (
-                                <List.Item
-                                    key={i}
-                                    title={value.table_name}
-                                    style={{backgroundColor: '#e4f9ff', marginTop: 10}}
-                                    onPress={() => selectRow(value.table_id)}
-                                />
-                            );
-                        })
-                    }
+    if (!fontsLoaded) {
+        return <AppLoading/>;
+    } else {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.headerStyle}>Tables</Text>
+                <View style={[{flex: 1}, styles.elementsContainer]}>
+                    <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+                        {
+                            tables.map((value, i) => {
+                                return (
+                                    <List.Item
+                                        key={i}
+                                        title={value.table_name}
+                                        style={{backgroundColor: '#e4f9ff', marginTop: 10}}
+                                        onPress={() => selectTable(value.table_id)}
+                                    />
+                                );
+                            })
+                        }
+                    </View>
                 </View>
             </View>
-        </View>
-    );
+        );
+    }
 }
 
-function Row({route}) {
+function Row({route, navigation}) {
     const db = SQLite.openDatabase('db.db');
     const [rows, setRows] = useState([]);
 
     const {table_id} = route.params;
+
+    const selectRow = (record) => {
+        navigation.navigate('Card', {record});
+    };
 
     useEffect(() => {
         db.transaction((tx) => {
@@ -189,6 +224,7 @@ function Row({route}) {
                                         key={i}
                                         title={JSON.parse(value.record)[Object.keys(JSON.parse(value.record))[0]]}
                                         style={{backgroundColor: '#e4f9ff', marginTop: 10}}
+                                        onPress={() => selectRow(JSON.parse(value.record))}
                                     />
                                 );
                             })
@@ -200,6 +236,81 @@ function Row({route}) {
     );
 }
 
+function Card({route}) {
+    const [fontsLoaded] = useFonts({
+        Rubik_300Light,
+        Rubik_300Light_Italic,
+        Rubik_400Regular,
+        Rubik_400Regular_Italic,
+        Rubik_500Medium,
+        Rubik_500Medium_Italic,
+        Rubik_700Bold,
+        Rubik_700Bold_Italic,
+        Rubik_900Black,
+        Rubik_900Black_Italic
+    });
+    const {record} = route.params;
+
+    if (!fontsLoaded) {
+        return <AppLoading/>;
+    } else {
+        return (
+            <View style={styles.container}>
+                <View style={[{flex: 1}, styles.elementsContainer]}>
+                    <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+                        <ScrollView>
+                            {
+                                Object.entries(record).map((value, i) => {
+                                    return (
+                                        <View key={i}>
+                                            <Title style={{fontFamily: 'Rubik_500Medium'}}>{value[0]}{':'}</Title>
+                                            <View
+                                                style={{
+                                                    flex: 1,
+                                                    flexDirection: 'row',
+                                                    flexWrap: 'wrap'
+                                                }}
+                                            >
+                                                <Content value={value[1]}/>
+                                            </View>
+                                        </View>
+                                    );
+                                })
+                            }
+                        </ScrollView>
+                    </View>
+                </View>
+            </View>
+        );
+    }
+}
+
+const Content = ({value}) => {
+    if (typeof (value) === 'object') {
+        return value.map((items, i) => {
+            return (
+                <View
+                    key={i}
+                    style={{
+                        backgroundColor: '#ecfbfc',
+                        marginLeft: 8,
+                        marginTop: 8,
+                        borderRadius: 16,
+                        borderWidth: 2,
+                        borderColor: '#00bcd4'
+                    }}
+                >
+                    <Subheading style={{fontFamily: 'Rubik_400Regular'}}>&nbsp;{value[i]}&nbsp;</Subheading>
+                </View>
+            );
+        });
+    } else {
+        return (
+            <Subheading>{value}</Subheading>
+        );
+    }
+};
+
 const styles = {
     container: {
         backgroundColor: '#FFFFFF',
@@ -207,10 +318,12 @@ const styles = {
         flex: 1
     },
     headerStyle: {
+        color: '#5E72E4',
         fontSize: 36,
         textAlign: 'center',
         fontWeight: '100',
-        marginBottom: 24
+        marginBottom: 24,
+        fontFamily: 'Rubik_500Medium'
     },
     elementsContainer: {
         backgroundColor: '#FFFFFF',
@@ -237,6 +350,10 @@ export default function App() {
                 <Stack.Screen
                     name='Row'
                     component={Row}
+                />
+                <Stack.Screen
+                    name='Card'
+                    component={Card}
                 />
             </Stack.Navigator>
         </NavigationContainer>
