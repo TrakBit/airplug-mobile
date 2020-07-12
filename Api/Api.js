@@ -28,3 +28,11 @@ export const getAllRows = (token) => {
     const body = {token};
     return fetch.post('/allrows/', body, {headers});
 };
+
+export const authenticate = (token) => {
+    const headers = {
+        Authorization: 'Token ' + token
+    };
+    return fetch.get('/authenticate/', {headers});
+};
+
