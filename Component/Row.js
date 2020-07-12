@@ -2,9 +2,6 @@ import React, {useState, useEffect} from 'react';
 import * as SQLite from 'expo-sqlite';
 import {View, ScrollView} from 'react-native';
 import {List} from 'react-native-paper';
-import {
-    Rubik_500Medium
-} from '@expo-google-fonts/rubik';
 
 function Row({route, navigation}) {
     const db = SQLite.openDatabase('db.db');

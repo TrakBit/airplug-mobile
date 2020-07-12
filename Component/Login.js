@@ -54,7 +54,7 @@ function Login({navigation}) {
                 navigation.navigate('Home');
             }
         });
-    });
+    }, []);
 
     const onDismissSnackBar = () => setVisible(false);
 

@@ -5,36 +5,9 @@ import {getTables, getAllRows} from '../Api/Api';
 import {Text, View} from 'react-native';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 import NetInfo from '@react-native-community/netinfo';
-import {AppLoading} from 'expo';
 import {List} from 'react-native-paper';
-import {
-    useFonts,
-    Rubik_300Light,
-    Rubik_300Light_Italic,
-    Rubik_400Regular,
-    Rubik_400Regular_Italic,
-    Rubik_500Medium,
-    Rubik_500Medium_Italic,
-    Rubik_700Bold,
-    Rubik_700Bold_Italic,
-    Rubik_900Black,
-    Rubik_900Black_Italic
-} from '@expo-google-fonts/rubik';
 
 function Home({navigation}) {
-    const [fontsLoaded] = useFonts({
-        Rubik_300Light,
-        Rubik_300Light_Italic,
-        Rubik_400Regular,
-        Rubik_400Regular_Italic,
-        Rubik_500Medium,
-        Rubik_500Medium_Italic,
-        Rubik_700Bold,
-        Rubik_700Bold_Italic,
-        Rubik_900Black,
-        Rubik_900Black_Italic
-    });
-
     const db = SQLite.openDatabase('db.db');
     const [tables, setTables] = useState([]);
 
@@ -81,31 +54,27 @@ function Home({navigation}) {
         });
     }, []);
 
-    if (!fontsLoaded) {
-        return <AppLoading/>;
-    } else {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.headerStyle}>Tables</Text>
-                <View style={[{flex: 1}, styles.elementsContainer]}>
-                    <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
-                        {
-                            tables.map((value, i) => {
-                                return (
-                                    <List.Item
-                                        key={i}
-                                        title={value.table_name}
-                                        style={{backgroundColor: '#e4f9ff', marginTop: 10}}
-                                        onPress={() => selectTable(value.table_id)}
-                                    />
-                                );
-                            })
-                        }
-                    </View>
+    return (
+        <View style={styles.container}>
+            <Text style={styles.headerStyle}>Tables</Text>
+            <View style={[{flex: 1}, styles.elementsContainer]}>
+                <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+                    {
+                        tables.map((value, i) => {
+                            return (
+                                <List.Item
+                                    key={i}
+                                    title={value.table_name}
+                                    style={{backgroundColor: '#e4f9ff', marginTop: 10}}
+                                    onPress={() => selectTable(value.table_id)}
+                                />
+                            );
+                        })
+                    }
                 </View>
             </View>
-        );
-    }
+        </View>
+    );
 }
 
 const styles = {
