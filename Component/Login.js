@@ -4,6 +4,7 @@ import {login, authenticate} from '../Api/Api';
 import NetInfo from '@react-native-community/netinfo';
 import {Text, View} from 'react-native';
 import {TextInput, Button, Snackbar} from 'react-native-paper';
+import {KeyboardAwareScrollView} from '@codler/react-native-keyboard-aware-scroll-view';
 import {AppLoading} from 'expo';
 import {
     useFonts,
@@ -83,7 +84,7 @@ function Login({navigation}) {
         return <AppLoading/>;
     } else {
         return (
-            <View style={styles.container}>
+            <KeyboardAwareScrollView style={styles.container}>
                 <Text style={styles.headerStyle}>AirPlug</Text>
                 <View style={[{flex: 1}, styles.elementsContainer]}>
                     <View style={{flex: 1, backgroundColor: '#FFFFFF'}}/>
@@ -95,7 +96,7 @@ function Login({navigation}) {
                             onChangeText={(text) => setEmail(text)}
                         />
                     </View>
-                    <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+                    <View style={{flex: 1, backgroundColor: '#FFFFFF', marginTop: 20}}>
                         <TextInput
                             label='Password'
                             value={password}
@@ -103,28 +104,23 @@ function Login({navigation}) {
                             onChangeText={(text) => setPassword(text)}
                         />
                     </View>
-                    <View style={{flex: 3, backgroundColor: '#FFFFFF'}}>
+                    <View style={{flex: 3, backgroundColor: '#FFFFFF', marginTop: 20}}>
                         <Button
                             mode='contained'
                             onPress={() => loginHandle()}
+                            style={{backgroundColor: '#5E72E4'}}
                         >
-                            LOGIN
+                            <Text style={styles.loginStyle}>LOGIN</Text>
                         </Button>
                     </View>
                 </View>
                 <Snackbar
                     visible={visible}
                     onDismiss={onDismissSnackBar}
-                    action={{
-                        label: 'Undo',
-                        onPress: () => {
-                            // Do something
-                        }
-                    }}
                 >
                     {notificationMsg}
                 </Snackbar>
-            </View>
+            </KeyboardAwareScrollView>
         );
     }
 }
@@ -138,6 +134,14 @@ const styles = {
     headerStyle: {
         color: '#5E72E4',
         fontSize: 36,
+        textAlign: 'center',
+        fontWeight: '100',
+        marginBottom: 24,
+        fontFamily: 'Rubik_500Medium'
+    },
+    loginStyle: {
+        color: '#FFFFFF',
+        fontSize: 20,
         textAlign: 'center',
         fontWeight: '100',
         marginBottom: 24,
