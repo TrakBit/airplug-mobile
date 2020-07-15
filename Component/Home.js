@@ -6,6 +6,7 @@ import {Text, View} from 'react-native';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 import NetInfo from '@react-native-community/netinfo';
 import {List} from 'react-native-paper';
+import * as FileSystem from 'expo-file-system';
 
 function Home({navigation}) {
     const db = SQLite.openDatabase('db.db');
@@ -20,6 +21,21 @@ function Home({navigation}) {
             const token = await SecureStore.getItemAsync('token');
             const tableData = await getTables(token);
             const rowData = await getAllRows(token);
+
+            rowData.data.rows.forEach((items) => {
+                Object.entries(JSON.parse(items.record)).forEach((value) => {
+                    if (typeof (value[1]) === 'object') {
+                        if (typeof (value[1][0]) === 'object' && 'url' in value[1][0]) {
+                            const fileName = value[1][0].fileName;
+                            const fileUri = FileSystem.documentDirectory + fileName;
+                            FileSystem.downloadAsync(
+                                value[1][0].url,
+                                fileUri
+                            );
+                        }
+                    }
+                });
+            });
 
             await db.transaction((tx) => {
                 tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);

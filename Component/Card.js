@@ -1,10 +1,28 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, ScrollView, Image} from 'react-native';
 import {Title, Subheading} from 'react-native-paper';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
+import * as FileSystem from 'expo-file-system';
 
 function Card({route}) {
     const {record} = route.params;
+    const [uri, setUri] = useState(null);
+
+    useEffect(() => {
+        Object.entries(record).map((value) => {
+            if (typeof (value[1]) === 'object') {
+                value[1].map((item) => {
+                    async function getImage() {
+                        const fileInfo = await FileSystem.getInfoAsync(
+                            FileSystem.documentDirectory + item.fileName
+                        );
+                        await setUri(fileInfo.uri);
+                    }
+                    getImage();
+                });
+            }
+        });
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -23,7 +41,11 @@ function Card({route}) {
                                                 flexWrap: 'wrap'
                                             }}
                                         >
-                                            <Content value={value[1]}/>
+                                            <Content
+                                                value={value[1]}
+                                                uri={uri}
+                                                setUri={setUri}
+                                            />
                                         </View>
                                     </View>
                                 );
@@ -36,10 +58,9 @@ function Card({route}) {
     );
 }
 
-const Content = ({value}) => {
+const Content = ({value, uri}) => {
     if (typeof (value) === 'object') {
         return value.map((item, i) => {
-            // check if attachment is of type image
             if (typeof (item) === 'object' && 'url' in item) {
                 return (
                     <View
@@ -48,12 +69,12 @@ const Content = ({value}) => {
                             marginTop: 8
                         }}
                     >
-                        <Image
-                            style={{height: 250, width: wp(100)}}
-                            source={{
-                                uri: item.url
-                            }}
-                        />
+                        {
+                            uri &&
+                            <Image
+                                source={{uri}}
+                                style={{height: 250, width: wp(100)}}
+                            />}
                     </View>
                 );
             } else {
