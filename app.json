@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "com.trakbit.airplug",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",

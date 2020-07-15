@@ -1,6 +1,7 @@
 import React from 'react';
-import {View, ScrollView} from 'react-native';
+import {View, ScrollView, Image} from 'react-native';
 import {Title, Subheading} from 'react-native-paper';
+import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
 
 function Card({route}) {
     const {record} = route.params;
@@ -37,22 +38,41 @@ function Card({route}) {
 
 const Content = ({value}) => {
     if (typeof (value) === 'object') {
-        return value.map((items, i) => {
-            return (
-                <View
-                    key={i}
-                    style={{
-                        backgroundColor: '#ecfbfc',
-                        marginLeft: 8,
-                        marginTop: 8,
-                        borderRadius: 16,
-                        borderWidth: 2,
-                        borderColor: '#00bcd4'
-                    }}
-                >
-                    <Subheading style={{fontFamily: 'Rubik_400Regular'}}>&nbsp;{value[i]}&nbsp;</Subheading>
-                </View>
-            );
+        return value.map((item, i) => {
+            // check if attachment is of type image
+            if (typeof (item) === 'object' && 'url' in item) {
+                return (
+                    <View
+                        key={i}
+                        style={{
+                            marginTop: 8
+                        }}
+                    >
+                        <Image
+                            style={{height: 250, width: wp(100)}}
+                            source={{
+                                uri: item.url
+                            }}
+                        />
+                    </View>
+                );
+            } else {
+                return (
+                    <View
+                        key={i}
+                        style={{
+                            backgroundColor: '#ecfbfc',
+                            marginLeft: 8,
+                            marginTop: 8,
+                            borderRadius: 16,
+                            borderWidth: 2,
+                            borderColor: '#00bcd4'
+                        }}
+                    >
+                        <Subheading style={{fontFamily: 'Rubik_400Regular'}}>&nbsp;{item}&nbsp;</Subheading>
+                    </View>
+                );
+            }
         });
     } else {
         return (
