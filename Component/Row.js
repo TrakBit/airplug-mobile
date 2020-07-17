@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import * as SQLite from 'expo-sqlite';
 import {View, ScrollView} from 'react-native';
 import {List} from 'react-native-paper';
+import * as SecureStore from 'expo-secure-store';
 
 function Row({route, navigation}) {
     const db = SQLite.openDatabase('db.db');
@@ -9,8 +10,26 @@ function Row({route, navigation}) {
 
     const {table_id} = route.params;
 
-    const selectRow = (record) => {
-        navigation.navigate('Card', {record});
+    const selectRow = async (record) => {
+        function setConfig() {
+            const records = [];
+            Object.entries(record).forEach((value) => {
+                const images = value[1];
+                if (typeof (images) === 'object') {
+                    images.forEach(async (item, i) => {
+                        if (typeof (item) === 'object' && 'url' in item) {
+                            const image = await SecureStore.getItemAsync(item.id);
+                            await records.push(image);
+                            if ((images.length - 1) === i) {
+                                navigation.navigate('Card', {record, records});
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        setConfig();
     };
 
     useEffect(() => {

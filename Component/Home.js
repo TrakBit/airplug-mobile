@@ -25,14 +25,20 @@ function Home({navigation}) {
             rowData.data.rows.forEach((items) => {
                 Object.entries(JSON.parse(items.record)).forEach((value) => {
                     if (typeof (value[1]) === 'object') {
-                        if (typeof (value[1][0]) === 'object' && 'url' in value[1][0]) {
-                            const fileName = value[1][0].fileName;
-                            const fileUri = FileSystem.documentDirectory + fileName;
-                            FileSystem.downloadAsync(
-                                value[1][0].url,
-                                fileUri
-                            );
-                        }
+                        //const val = value[1][0];
+
+                        value[1].forEach((image, i) => {
+                            const val = value[1][i];
+                            if (typeof (val) === 'object' && 'url' in val) {
+                                const fileName = val.id;
+                                const fileUri = FileSystem.documentDirectory + fileName;
+                                FileSystem.downloadAsync(
+                                    val.url,
+                                    fileUri
+                                );
+                                SecureStore.setItemAsync(fileName, fileUri);
+                            }
+                        });
                     }
                 });
             });

@@ -1,28 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {View, ScrollView, Image} from 'react-native';
 import {Title, Subheading} from 'react-native-paper';
 import {widthPercentageToDP as wp} from 'react-native-responsive-screen';
-import * as FileSystem from 'expo-file-system';
 
 function Card({route}) {
-    const {record} = route.params;
-    const [uri, setUri] = useState(null);
-
-    useEffect(() => {
-        Object.entries(record).map((value) => {
-            if (typeof (value[1]) === 'object') {
-                value[1].map((item) => {
-                    async function getImage() {
-                        const fileInfo = await FileSystem.getInfoAsync(
-                            FileSystem.documentDirectory + item.fileName
-                        );
-                        await setUri(fileInfo.uri);
-                    }
-                    getImage();
-                });
-            }
-        });
-    }, []);
+    const {record, records} = route.params;
 
     return (
         <View style={styles.container}>
@@ -43,8 +25,7 @@ function Card({route}) {
                                         >
                                             <Content
                                                 value={value[1]}
-                                                uri={uri}
-                                                setUri={setUri}
+                                                records={records}
                                             />
                                         </View>
                                     </View>
@@ -58,7 +39,7 @@ function Card({route}) {
     );
 }
 
-const Content = ({value, uri}) => {
+const Content = ({value, records}) => {
     if (typeof (value) === 'object') {
         return value.map((item, i) => {
             if (typeof (item) === 'object' && 'url' in item) {
@@ -69,12 +50,10 @@ const Content = ({value, uri}) => {
                             marginTop: 8
                         }}
                     >
-                        {
-                            uri &&
-                            <Image
-                                source={{uri}}
-                                style={{height: 250, width: wp(100)}}
-                            />}
+                        <Image
+                            style={{height: 250, width: wp(100)}}
+                            source={{uri: records[i]}}
+                        />
                     </View>
                 );
             } else {
