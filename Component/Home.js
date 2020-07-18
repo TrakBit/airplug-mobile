@@ -6,7 +6,6 @@ import {Text, View} from 'react-native';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 import NetInfo from '@react-native-community/netinfo';
 import {List} from 'react-native-paper';
-import * as FileSystem from 'expo-file-system';
 
 function Home({navigation}) {
     const db = SQLite.openDatabase('db.db');
@@ -22,30 +21,9 @@ function Home({navigation}) {
             const tableData = await getTables(token);
             const rowData = await getAllRows(token);
 
-            rowData.data.rows.forEach((items) => {
-                Object.entries(JSON.parse(items.record)).forEach((value) => {
-                    if (typeof (value[1]) === 'object') {
-                        //const val = value[1][0];
-
-                        value[1].forEach((image, i) => {
-                            const val = value[1][i];
-                            if (typeof (val) === 'object' && 'url' in val) {
-                                const fileName = val.id;
-                                const fileUri = FileSystem.documentDirectory + fileName;
-                                FileSystem.downloadAsync(
-                                    val.url,
-                                    fileUri
-                                );
-                                SecureStore.setItemAsync(fileName, fileUri);
-                            }
-                        });
-                    }
-                });
-            });
-
             await db.transaction((tx) => {
                 tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);
-                tx.executeSql('create table if not exists records (table_id int, record text);', []);
+                tx.executeSql('create table if not exists records (table_id int, record text, attachment text);', []);
                 tx.executeSql('delete from tables');
                 tx.executeSql('delete from records');
             });

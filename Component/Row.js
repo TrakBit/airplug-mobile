@@ -1,8 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import * as SQLite from 'expo-sqlite';
 import {View, ScrollView} from 'react-native';
-import {List} from 'react-native-paper';
+import {List, Button} from 'react-native-paper';
 import * as SecureStore from 'expo-secure-store';
+import * as FileSystem from 'expo-file-system';
 
 function Row({route, navigation}) {
     const db = SQLite.openDatabase('db.db');
@@ -32,6 +33,19 @@ function Row({route, navigation}) {
         setConfig();
     };
 
+    const downloadAttachment = (attachment) => {
+        const attachments = JSON.parse(attachment);
+        attachments.forEach((item) => {
+            const fileName = item.id;
+            const fileUri = FileSystem.documentDirectory + fileName;
+            FileSystem.downloadAsync(
+                item.url,
+                fileUri
+            );
+            SecureStore.setItemAsync(fileName, fileUri);
+        });
+    };
+
     useEffect(() => {
         db.transaction((tx) => {
             tx.executeSql('select * from records where table_id = (?)', [table_id], (_, {rows: {_array}}) => {
@@ -52,7 +66,26 @@ function Row({route, navigation}) {
                                         key={i}
                                         title={JSON.parse(value.record)[Object.keys(JSON.parse(value.record))[0]]}
                                         style={{backgroundColor: '#e4f9ff', marginTop: 10}}
-                                        onPress={() => selectRow(JSON.parse(value.record))}
+                                        left={
+                                            () => {
+                                                return (
+                                                    <Button
+                                                        onPress={() => selectRow(JSON.parse(value.record))}
+                                                        icon='folder'
+                                                    />
+                                                );
+                                            }
+                                        }
+                                        right={
+                                            () => {
+                                                return (
+                                                    <Button
+                                                        onPress={() => downloadAttachment(value.attachment)}
+                                                        icon='download'
+                                                    />
+                                                );
+                                            }
+                                        }
                                     />
                                 );
                             })
