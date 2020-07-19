@@ -17,13 +17,15 @@ function Home({navigation}) {
 
     useEffect(() => {
         async function setConfig() {
+            /* TODO: Move to Sync Button
             const token = await SecureStore.getItemAsync('token');
             const tableData = await getTables(token);
             const rowData = await getAllRows(token);
 
             await db.transaction((tx) => {
+                //tx.executeSql('drop table records');
                 tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);
-                tx.executeSql('create table if not exists records (table_id int, record text, attachment text);', []);
+                tx.executeSql('create table if not exists records (table_id int, record_id int, name text, record text, attachment text);', []);
                 tx.executeSql('delete from tables');
                 tx.executeSql('delete from records');
             });
@@ -33,6 +35,7 @@ function Home({navigation}) {
 
             const databaseLayerRecords = new DatabaseLayer(async () => db, 'records');
             await databaseLayerRecords.bulkInsertOrReplace(rowData.data.rows);
+            */
 
             db.transaction((txn) => {
                 txn.executeSql('select * from tables', [], (_, {rows: {_array}}) => {

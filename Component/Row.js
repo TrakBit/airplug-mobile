@@ -1,15 +1,22 @@
 import React, {useState, useEffect} from 'react';
 import * as SQLite from 'expo-sqlite';
-import {View, ScrollView} from 'react-native';
-import {List, Button} from 'react-native-paper';
+import {SafeAreaView, View, FlatList, StyleSheet, Text, StatusBar} from 'react-native';
+import {Button} from 'react-native-paper';
 import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system';
 
-function Row({route, navigation}) {
+const Row = ({route, navigation}) => {
     const db = SQLite.openDatabase('db.db');
     const [rows, setRows] = useState([]);
-
     const {table_id} = route.params;
+
+    useEffect(() => {
+        db.transaction((tx) => {
+            tx.executeSql('select * from records where table_id = (?)', [table_id], (_, {rows: {_array}}) => {
+                setRows(_array);
+            });
+        });
+    }, []);
 
     const selectRow = async (record) => {
         function setConfig() {
@@ -46,77 +53,78 @@ function Row({route, navigation}) {
         });
     };
 
-    useEffect(() => {
-        db.transaction((tx) => {
-            tx.executeSql('select * from records where table_id = (?)', [table_id], (_, {rows: {_array}}) => {
-                setRows(_array);
-            });
-        });
-    }, []);
-
-    return (
-        <View style={styles.container}>
-            <View style={[{flex: 1}, styles.elementsContainer]}>
-                <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
-                    <ScrollView>
-                        {
-                            rows.map((value, i) => {
-                                return (
-                                    <List.Item
-                                        key={i}
-                                        title={JSON.parse(value.record)[Object.keys(JSON.parse(value.record))[0]]}
-                                        style={{backgroundColor: '#e4f9ff', marginTop: 10}}
-                                        left={
-                                            () => {
-                                                return (
-                                                    <Button
-                                                        onPress={() => selectRow(JSON.parse(value.record))}
-                                                        icon='folder'
-                                                    />
-                                                );
-                                            }
-                                        }
-                                        right={
-                                            () => {
-                                                return (
-                                                    <Button
-                                                        onPress={() => downloadAttachment(value.attachment)}
-                                                        icon='download'
-                                                    />
-                                                );
-                                            }
-                                        }
-                                    />
-                                );
-                            })
-                        }
-                    </ScrollView>
-                </View>
+    const Item = ({item}) => (
+        <View style={styles.items}>
+            <View style={styles.left}>
+                <Button
+                    icon='folder'
+                    onPress={() => selectRow(JSON.parse(item.record))}
+                />
+            </View>
+            <View style={styles.item}>
+                <Text style={styles.title}>{item.name}</Text>
+            </View>
+            <View style={styles.right}>
+                <Button
+                    icon='download'
+                    onPress={() => downloadAttachment(item.attachment)}
+                />
             </View>
         </View>
     );
-}
 
-const styles = {
-    container: {
-        backgroundColor: '#FFFFFF',
-        paddingTop: 48,
-        flex: 1
-    },
-    headerStyle: {
-        color: '#5E72E4',
-        fontSize: 36,
-        textAlign: 'center',
-        fontWeight: '100',
-        marginBottom: 24,
-        fontFamily: 'Rubik_500Medium'
-    },
-    elementsContainer: {
-        backgroundColor: '#FFFFFF',
-        marginLeft: 24,
-        marginRight: 24,
-        marginBottom: 24
-    }
+    const renderItem = ({item}) => (
+        <Item item={item}/>
+    );
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={rows}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.record_id}
+            />
+        </SafeAreaView>
+    );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        marginTop: StatusBar.currentHeight || 0
+    },
+    items: {
+        flex: 1,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'flex-start',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1
+        },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+        elevation: 3,
+        backgroundColor: '#fff',
+        padding: 20,
+        marginVertical: 8,
+        marginHorizontal: 16
+    },
+    left: {
+        width: '20%'
+    },
+    right: {
+        width: '20%'
+    },
+    item: {
+        width: '60%'
+    },
+    title: {
+        marginTop: 10,
+        fontSize: 16,
+        fontFamily: 'Rubik_500Medium'
+    }
+});
 
 export default Row;
