@@ -5,7 +5,7 @@ import {getTables, getAllRows} from '../Api/Api';
 import {Text, View} from 'react-native';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 import NetInfo from '@react-native-community/netinfo';
-import {List} from 'react-native-paper';
+import {List, Button} from 'react-native-paper';
 
 function Home({navigation}) {
     const db = SQLite.openDatabase('db.db');
@@ -15,15 +15,13 @@ function Home({navigation}) {
         navigation.navigate('Row', {table_id});
     };
 
-    useEffect(() => {
+    const sync = () => {
         async function setConfig() {
-            /* TODO: Move to Sync Button
             const token = await SecureStore.getItemAsync('token');
             const tableData = await getTables(token);
             const rowData = await getAllRows(token);
 
             await db.transaction((tx) => {
-                //tx.executeSql('drop table records');
                 tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);
                 tx.executeSql('create table if not exists records (table_id int, record_id int, name text, record text, attachment text);', []);
                 tx.executeSql('delete from tables');
@@ -35,7 +33,6 @@ function Home({navigation}) {
 
             const databaseLayerRecords = new DatabaseLayer(async () => db, 'records');
             await databaseLayerRecords.bulkInsertOrReplace(rowData.data.rows);
-            */
 
             db.transaction((txn) => {
                 txn.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
@@ -47,13 +44,15 @@ function Home({navigation}) {
         NetInfo.fetch().then((state) => {
             if (state.isConnected) {
                 setConfig();
-            } else {
-                db.transaction((tx) => {
-                    tx.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
-                        setTables(_array);
-                    });
-                });
             }
+        });
+    };
+
+    useEffect(() => {
+        db.transaction((txn) => {
+            txn.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
+                setTables(_array);
+            });
         });
     }, []);
 
@@ -61,7 +60,15 @@ function Home({navigation}) {
         <View style={styles.container}>
             <Text style={styles.headerStyle}>Tables</Text>
             <View style={[{flex: 1}, styles.elementsContainer]}>
-                <View style={{flex: 1, backgroundColor: '#FFFFFF'}}>
+                <Button
+                    icon='sync'
+                    mode='contained'
+                    onPress={() => sync()}
+                    style={{backgroundColor: '#5E72E4'}}
+                >
+                    <Text style={styles.loginStyle}>SYNC</Text>
+                </Button>
+                <View style={{marginTop: 40, flex: 1, backgroundColor: '#FFFFFF'}}>
                     {
                         tables.map((value, i) => {
                             return (
@@ -99,6 +106,14 @@ const styles = {
         marginLeft: 24,
         marginRight: 24,
         marginBottom: 24
+    },
+    loginStyle: {
+        color: '#FFFFFF',
+        fontSize: 20,
+        textAlign: 'center',
+        fontWeight: '100',
+        marginBottom: 24,
+        fontFamily: 'Rubik_500Medium'
     }
 };
 
