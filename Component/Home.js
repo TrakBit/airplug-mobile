@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 import {getTables, getAllRows} from '../Api/Api';
-import {Text, View} from 'react-native';
+import {Text, View, ActivityIndicator} from 'react-native';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 import NetInfo from '@react-native-community/netinfo';
 import {List, Button} from 'react-native-paper';
@@ -10,6 +10,7 @@ import {List, Button} from 'react-native-paper';
 function Home({navigation}) {
     const db = SQLite.openDatabase('db.db');
     const [tables, setTables] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     const selectTable = (table_id) => {
         navigation.navigate('Row', {table_id});
@@ -17,6 +18,7 @@ function Home({navigation}) {
 
     const sync = () => {
         async function setConfig() {
+            await setLoading(true);
             const token = await SecureStore.getItemAsync('token');
             const tableData = await getTables(token);
             const rowData = await getAllRows(token);
@@ -37,6 +39,7 @@ function Home({navigation}) {
             db.transaction((txn) => {
                 txn.executeSql('select * from tables', [], (_, {rows: {_array}}) => {
                     setTables(_array);
+                    setLoading(false);
                 });
             });
         }
@@ -56,35 +59,46 @@ function Home({navigation}) {
         });
     }, []);
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.headerStyle}>Tables</Text>
-            <View style={[{flex: 1}, styles.elementsContainer]}>
-                <Button
-                    icon='sync'
-                    mode='contained'
-                    onPress={() => sync()}
-                    style={{backgroundColor: '#5E72E4'}}
-                >
-                    <Text style={styles.loginStyle}>SYNC</Text>
-                </Button>
-                <View style={{marginTop: 40, flex: 1, backgroundColor: '#FFFFFF'}}>
-                    {
-                        tables.map((value, i) => {
-                            return (
-                                <List.Item
-                                    key={i}
-                                    title={value.table_name}
-                                    style={{backgroundColor: '#e4f9ff', marginTop: 10}}
-                                    onPress={() => selectTable(value.table_id)}
-                                />
-                            );
-                        })
-                    }
+    if (loading === true) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator
+                    size='large'
+                    color='#5E72E4'
+                />
+            </View>
+        );
+    } else {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.headerStyle}>Tables</Text>
+                <View style={[{flex: 1}, styles.elementsContainer]}>
+                    <Button
+                        icon='sync'
+                        mode='contained'
+                        onPress={() => sync()}
+                        style={{backgroundColor: '#5E72E4'}}
+                    >
+                        <Text style={styles.loginStyle}>SYNC</Text>
+                    </Button>
+                    <View style={{marginTop: 40, flex: 1, backgroundColor: '#FFFFFF'}}>
+                        {
+                            tables.map((value, i) => {
+                                return (
+                                    <List.Item
+                                        key={i}
+                                        title={value.table_name}
+                                        style={{backgroundColor: '#e4f9ff', marginTop: 10}}
+                                        onPress={() => selectTable(value.table_id)}
+                                    />
+                                );
+                            })
+                        }
+                    </View>
                 </View>
             </View>
-        </View>
-    );
+        );
+    }
 }
 
 const styles = {
