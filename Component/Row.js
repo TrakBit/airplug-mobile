@@ -19,6 +19,7 @@ const Row = ({route, navigation}) => {
     }, []);
 
     const selectRow = async (record) => {
+        const FileDirectory = FileSystem.documentDirectory;
         function setConfig() {
             const records = [];
             Object.entries(record).forEach((value) => {
@@ -27,9 +28,16 @@ const Row = ({route, navigation}) => {
                     images.forEach(async (item, i) => {
                         if (typeof (item) === 'object' && 'url' in item) {
                             const image = await SecureStore.getItemAsync(item.id);
-                            await records.push(image);
-                            if ((images.length - 1) === i) {
-                                navigation.navigate('Card', {record, records});
+                            if (image === null) {
+                                records.push(FileDirectory + 'download');
+                                if ((images.length - 1) === i) {
+                                    navigation.navigate('Card', {record, records});
+                                }
+                            } else {
+                                records.push(image);
+                                if ((images.length - 1) === i) {
+                                    navigation.navigate('Card', {record, records});
+                                }
                             }
                         }
                     });
@@ -82,7 +90,7 @@ const Row = ({route, navigation}) => {
             <FlatList
                 data={rows}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.record_id}
+                keyExtractor={(item) => item.record_id.toString()}
             />
         </SafeAreaView>
     );

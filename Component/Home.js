@@ -6,6 +6,7 @@ import {Text, View, ActivityIndicator} from 'react-native';
 import DatabaseLayer from 'expo-sqlite-orm/src/DatabaseLayer';
 import NetInfo from '@react-native-community/netinfo';
 import {List, Button} from 'react-native-paper';
+import * as FileSystem from 'expo-file-system';
 
 function Home({navigation}) {
     const db = SQLite.openDatabase('db.db');
@@ -42,6 +43,14 @@ function Home({navigation}) {
                     setLoading(false);
                 });
             });
+
+            const fileName = 'download';
+            const fileUri = FileSystem.documentDirectory + fileName;
+            FileSystem.downloadAsync(
+                'https://user-images.githubusercontent.com/3825401/88519805-5279f580-d010-11ea-974b-644c54177369.jpg',
+                fileUri
+            );
+            SecureStore.setItemAsync(fileName, fileUri);
         }
 
         NetInfo.fetch().then((state) => {
