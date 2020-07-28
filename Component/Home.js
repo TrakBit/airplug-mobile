@@ -19,12 +19,12 @@ function Home({navigation}) {
 
     const sync = () => {
         async function setConfig() {
-            await setLoading(true);
+            setLoading(true);
             const token = await SecureStore.getItemAsync('token');
             const tableData = await getTables(token);
             const rowData = await getAllRows(token);
 
-            await db.transaction((tx) => {
+            db.transaction((tx) => {
                 tx.executeSql('create table if not exists tables (base_key text, api_key text, table_id int, table_name text);', []);
                 tx.executeSql('create table if not exists records (table_id int, record_id int, name text, record text, attachment text);', []);
                 tx.executeSql('delete from tables');
